@@ -772,6 +772,7 @@ lsquic_send_ctl_sent_packet (lsquic_send_ctl_t *ctl,
 static void
 send_ctl_select_cc (struct lsquic_send_ctl *ctl)
 {
+    /*
     lsquic_time_t srtt;
 
     srtt = lsquic_rtt_stats_get_srtt(&ctl->sc_conn_pub->rtt_stats);
@@ -793,6 +794,27 @@ send_ctl_select_cc (struct lsquic_send_ctl *ctl)
         ctl->sc_ci = &lsquic_cong_bbr_if;
         ctl->sc_cong_ctl = &ctl->sc_adaptive_cc.acc_bbr;
     }
+    */
+    unsigned n_conns;
+
+    n_conns = ctl->sc_enpub->enp_engine->n_conns;
+
+    if (n_conns >= 3)
+    {
+        LSQ_INFO("Now have %u connections: select Cubic congestion controller",
+            n_conns);
+        ctl->sc_ci = &lsquic_cong_cubic_if;
+        ctl->sc_cong_ctl = &ctl->sc_adaptive_cc.acc_cubic;
+        ctl->sc_flags |= SC_CLEANUP_BBR;
+    }
+    else
+    {
+        LSQ_INFO("Now have %u connections: select BBRv1 congestion controller",
+            n_conns);
+        ctl->sc_ci = &lsquic_cong_bbr_if;
+        ctl->sc_cong_ctl = &ctl->sc_adaptive_cc.acc_bbr;
+    }
+
 }
 
 
